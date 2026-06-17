@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+
+const BASE = import.meta.env.BASE_URL;
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -53,7 +55,7 @@ scene.add(rim);
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
 pmremGenerator.compileEquirectangularShader();
 
-new RGBELoader().load('/spooky_bamboo.hdr', (hdrTexture) => {
+new RGBELoader().load(`${BASE}spooky_bamboo.hdr`, (hdrTexture) => {
   hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
   scene.background = hdrTexture;
   scene.backgroundRotation.y = (127 * Math.PI) / 180;
@@ -184,7 +186,7 @@ function applyMaterials(model) {
 }
 
 // ── Load model ────────────────────────────────────────────────────────────────
-new GLTFLoader().load('/eric_new6.glb', (gltf) => {
+new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
 
   // Three model instances
   const model1 = gltf.scene;
@@ -242,10 +244,10 @@ new GLTFLoader().load('/eric_new6.glb', (gltf) => {
   });
 
   const fbxAnims = [
-    { file: '/Swimming.fbx',          name: 'Swimming' },
-    { file: '/Waving%20Gesture.fbx',  name: 'Wave'     },
-    { file: '/Mma%20Kick.fbx',        name: 'Kick'     },
-    { file: '/Jog%20In%20Circle.fbx', name: 'Jog'      },
+    { file: `${BASE}Swimming.fbx`,          name: 'Swimming' },
+    { file: `${BASE}Waving%20Gesture.fbx`,  name: 'Wave'     },
+    { file: `${BASE}Mma%20Kick.fbx`,        name: 'Kick'     },
+    { file: `${BASE}Jog%20In%20Circle.fbx`, name: 'Jog'      },
   ];
 
   const fbxLoader = new FBXLoader();
