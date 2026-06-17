@@ -75,45 +75,65 @@ pmremGenerator.compileEquirectangularShader();
 scene.backgroundRotation.y = (127 * Math.PI) / 180;
 let currentEnvMap = null;
 
-function loadHDRI(filename, onLoaded) {
+function applyLighting(preset) {
+  ambient.color.setHex(preset.ambient[0]); ambient.intensity = preset.ambient[1];
+  key.color.setHex(preset.key[0]);         key.intensity     = preset.key[1];
+  fill.color.setHex(preset.fill[0]);       fill.intensity    = preset.fill[1];
+  rim.color.setHex(preset.rim[0]);         rim.intensity     = preset.rim[1];
+}
+
+function loadHDRI(filename, onLoaded, preset) {
   new RGBELoader().load(`${BASE}${filename}`, (hdrTexture) => {
     hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
-    const rot = scene.backgroundRotation.y;
     if (scene.background && typeof scene.background.dispose === 'function') scene.background.dispose();
     if (currentEnvMap) currentEnvMap.dispose();
     scene.background = hdrTexture;
-    scene.backgroundRotation.y = rot;
+    if (preset && preset.rot != null) {
+      const rad = (preset.rot * Math.PI) / 180;
+      scene.backgroundRotation.y = rad;
+      const rotSlider = document.getElementById('rot-slider');
+      const rotLabel  = document.getElementById('rot-label');
+      if (rotSlider) rotSlider.value = preset.rot;
+      if (rotLabel)  rotLabel.textContent = `ROT ${preset.rot}°`;
+    }
     currentEnvMap = pmremGenerator.fromEquirectangular(hdrTexture).texture;
     scene.environment = currentEnvMap;
+    if (preset) applyLighting(preset);
     if (onLoaded) onLoaded();
   });
 }
 
+// ambient: [color, intensity]  key: [color, intensity]  fill: [color, intensity]  rim: [color, intensity]
 const HDRIS = [
-  { file: 'spooky_bamboo.hdr',            label: 'Bamboo'  },
-  { file: 'bambanani_sunset_2k.hdr',       label: 'Sunset'  },
-  { file: 'ferndale_studio_07_2k.hdr',     label: 'Studio'  },
-  { file: 'peppermint_powerplant_4k.hdr',  label: 'Factory' },
-  { file: 'rostock_laage_airport_4k.hdr',  label: 'Airport' },
+  { file: 'spooky_bamboo.hdr',            label: 'Bamboo',  rot: 127,
+    ambient: [0xfff8f0, 0.70], key: [0xffe8c8, 0.30], fill: [0xfff0e0, 0.15], rim: [0xffe0b0, 0.08] },
+  { file: 'bambanani_sunset_2k.hdr',      label: 'Sunset',  rot: 285,
+    ambient: [0xffcc88, 0.40], key: [0xff9944, 0.22], fill: [0xffbb66, 0.08], rim: [0xff6622, 0.05] },
+  { file: 'ferndale_studio_07_2k.hdr',    label: 'Studio',  rot: 127,
+    ambient: [0xffffff, 0.45], key: [0xfff5ee, 0.18], fill: [0xeef5ff, 0.08], rim: [0xffffff, 0.04] },
+  { file: 'peppermint_powerplant_4k.hdr', label: 'Factory', rot: 231,
+    ambient: [0xddeeff, 0.25], key: [0xaaccff, 0.20], fill: [0xccddff, 0.06], rim: [0x88aadd, 0.05] },
+  { file: 'rostock_laage_airport_4k.hdr', label: 'Airport', rot: 360,
+    ambient: [0xf0f8ff, 0.18], key: [0xffffff, 0.10], fill: [0xe8f4ff, 0.04], rim: [0xffffff, 0.02] },
 ];
 
 // Build HDRI switcher buttons
 const hdriBtns = document.getElementById('hdri-btns');
-HDRIS.forEach(({ file, label }) => {
+HDRIS.forEach((hdri) => {
   const btn = document.createElement('button');
   btn.className = 'hdri-btn';
-  btn.textContent = label;
-  if (file === 'spooky_bamboo.hdr') btn.classList.add('active');
+  btn.textContent = hdri.label;
+  if (hdri.file === 'spooky_bamboo.hdr') btn.classList.add('active');
   btn.addEventListener('click', () => {
     document.querySelectorAll('.hdri-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    loadHDRI(file);
+    loadHDRI(hdri.file, null, hdri);
   });
   hdriBtns.appendChild(btn);
 });
 
-// Initial load — counts toward progress bar
-loadHDRI('spooky_bamboo.hdr', onAssetLoaded);
+// Initial load — counts toward progress bar, apply Bamboo lighting preset
+loadHDRI('spooky_bamboo.hdr', onAssetLoaded, HDRIS[0]);
 
 // ── Animation state ───────────────────────────────────────────────────────────
 const clock = new THREE.Clock();
