@@ -5,42 +5,43 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
 
-const BASE       = import.meta.env.BASE_URL;
-const WAVE_HOLD  = 3000;
+const BASE      = import.meta.env.BASE_URL;
+const WAVE_HOLD = 3000;
 
 // ── Student data ──────────────────────────────────────────────────────────────
 const STUDENTS = [
-  { id: 0, name: 'Irene Hong',    accent: '#2a9d8f' },
-  { id: 1, name: 'Matthew Baik',  accent: '#457b9d' },
-  { id: 2, name: 'Mason Park',    accent: '#ef476f' },
-  { id: 3, name: 'Nathaniel Kim', accent: '#f4a261' },
+  { id: 0, name: 'Irene Hong',    accent: '#2a9d8f',
+    desc: '', age: '—', favorites: '—', dislikes: '—', family: '—', dream: '—' },
+  { id: 1, name: 'Matthew Baik',  accent: '#457b9d',
+    desc: '', age: '—', favorites: '—', dislikes: '—', family: '—', dream: '—' },
+  { id: 2, name: 'Mason Park',    accent: '#ef476f',
+    desc: '', age: '—', favorites: '—', dislikes: '—', family: '—', dream: '—' },
+  { id: 3, name: 'Nathaniel Kim', accent: '#f4a261',
+    desc: '', age: '—', favorites: '—', dislikes: '—', family: '—', dream: '—' },
 ];
 
 const params    = new URLSearchParams(window.location.search);
 const studentId = Math.max(0, Math.min(3, parseInt(params.get('id') ?? '0', 10)));
 const student   = STUDENTS[studentId];
 
+// ── Populate static info ──────────────────────────────────────────────────────
 document.getElementById('student-name-display').textContent = student.name;
+document.getElementById('student-desc').textContent         = student.desc;
+document.getElementById('field-age').textContent            = student.age;
+document.getElementById('field-favorites').textContent      = student.favorites;
+document.getElementById('field-dislikes').textContent       = student.dislikes;
+document.getElementById('field-family').textContent         = student.family;
+document.getElementById('field-dream').textContent          = student.dream;
+
 document.title = `${student.name} — Robyn Art Studio`;
 document.documentElement.style.setProperty('--accent', student.accent);
 document.querySelectorAll('.name-card').forEach((card, i) => {
   if (i === studentId) card.classList.add('active');
 });
 
-// ── Editable fields (localStorage) ───────────────────────────────────────────
-['student-desc', 'field-age', 'field-favorites', 'field-dislikes', 'field-family', 'field-dream'].forEach(id => {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const key = `student_${studentId}_${id}`;
-  const saved = localStorage.getItem(key);
-  if (saved) el.textContent = saved;
-  el.addEventListener('blur', () => localStorage.setItem(key, el.textContent));
-  el.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); el.blur(); } });
-});
-
 // ── Loader ────────────────────────────────────────────────────────────────────
 let assetsLoaded = 0;
-const TOTAL_ASSETS = 2;
+const TOTAL_ASSETS = 5; // GLB + 4 FBX
 const percentEl = document.getElementById('loader-percent');
 const barFill   = document.getElementById('loader-bar-fill');
 
@@ -61,10 +62,10 @@ const canvas = document.getElementById('canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled  = true;
-renderer.shadowMap.type     = THREE.PCFSoftShadowMap;
-renderer.outputColorSpace   = THREE.SRGBColorSpace;
-renderer.toneMapping        = THREE.ACESFilmicToneMapping;
+renderer.shadowMap.enabled   = true;
+renderer.shadowMap.type      = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace    = THREE.SRGBColorSpace;
+renderer.toneMapping         = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
 
 const outlineEffect = new OutlineEffect(renderer, {
@@ -129,9 +130,42 @@ floorFill.rotation.x = -Math.PI / 2;
 floorFill.position.y = -0.9854;
 scene.add(floorFill);
 
-// ── Gizmo (set up before model loads, attached after) ────────────────────────
-let tc = null;
-let gizmoOn = false;
+// ── Animation system ──────────────────────────────────────────────────────────
+const actionMap = {};
+let currentAction = null;
+let waveTimer     = null;
+let mixer;
+
+function playAnimation(name) {
+  const next = actionMap[name];
+  if (!next || next === currentAction) return;
+  clearTimeout(waveTimer);
+  if (currentAction) currentAction.fadeOut(0.3);
+  if (name === 'Wave') {
+    next.setLoop(THREE.LoopOnce, 1);
+    next.clampWhenFinished = true;
+  } else {
+    next.setLoop(THREE.LoopRepeat, Infinity);
+  }
+  next.reset().fadeIn(0.3).play();
+  currentAction = next;
+
+  // Highlight active button
+  document.querySelectorAll('.anim-btn').forEach(b => b.classList.toggle('active', b.dataset.anim === name));
+}
+
+function addAnimButton(name) {
+  const btn = document.createElement('button');
+  btn.className    = 'anim-btn';
+  btn.dataset.anim = name;
+  btn.textContent  = name;
+  btn.addEventListener('click', () => playAnimation(name));
+  document.getElementById('anim-controls').appendChild(btn);
+}
+
+// ── Gizmo ─────────────────────────────────────────────────────────────────────
+let tc       = null;
+let gizmoOn  = false;
 
 function initGizmo(model) {
   tc = new TransformControls(camera, renderer.domElement);
@@ -143,17 +177,11 @@ function initGizmo(model) {
   tc.addEventListener('dragging-changed', e => { orbit.enabled = !e.value; });
 }
 
-function toggleGizmo() {
-  if (!tc) return;
-  gizmoOn = !gizmoOn;
-  tc.visible = gizmoOn;
-  tc.enabled = gizmoOn;
-}
-
 window.addEventListener('keydown', e => {
-  // Ignore keypresses when user is typing in editable fields
-  if (e.target.isContentEditable) return;
-  if (e.key === 'g' || e.key === 'G') toggleGizmo();
+  if (e.key === 'g' || e.key === 'G') {
+    gizmoOn = !gizmoOn;
+    if (tc) { tc.visible = gizmoOn; tc.enabled = gizmoOn; }
+  }
   if (e.key === 't' || e.key === 'T') tc?.setMode('translate');
   if (e.key === 'r' || e.key === 'R') tc?.setMode('rotate');
 });
@@ -177,10 +205,7 @@ document.getElementById('copy-btn').addEventListener('click', () => {
   });
 });
 
-// ── Model + animation ─────────────────────────────────────────────────────────
-let mixer;
-let waveTimer = null;
-
+// ── Load model ────────────────────────────────────────────────────────────────
 new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
   onAssetLoaded();
 
@@ -194,9 +219,7 @@ new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
     n.castShadow    = true;
     n.receiveShadow = true;
     n.material = new THREE.MeshStandardMaterial({
-      color:     new THREE.Color(0xf2ede8),
-      roughness: 0.75,
-      metalness: 0.0,
+      color: new THREE.Color(0xf2ede8), roughness: 0.75, metalness: 0.0,
     });
     n.material.userData.outlineParameters = { thickness: 0.004, color: [0.05, 0.05, 0.05], alpha: 1.0 };
   });
@@ -205,30 +228,40 @@ new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
   initGizmo(model);
   mixer = new THREE.AnimationMixer(model);
 
-  new FBXLoader().load(`${BASE}Waving%20Gesture.fbx`, (fbx) => {
-    onAssetLoaded();
-    if (!fbx.animations.length) return;
-    const clip = fbx.animations[0];
-    clip.tracks.forEach(track => {
-      const dot = track.name.indexOf('.');
-      if (dot === -1) return;
-      track.name = THREE.PropertyBinding.sanitizeNodeName(track.name.slice(0, dot))
-                 + track.name.slice(dot);
-    });
+  // Wave finished → hold then replay
+  mixer.addEventListener('finished', e => {
+    if (e.action !== actionMap['Wave']) return;
+    clearTimeout(waveTimer);
+    waveTimer = setTimeout(() => {
+      if (currentAction === actionMap['Wave']) actionMap['Wave'].reset().play();
+    }, WAVE_HOLD);
+  });
 
-    // Delayed wave: play once, hold, repeat (same as main page model1)
-    const action = mixer.clipAction(clip);
-    action.setLoop(THREE.LoopOnce, 1);
-    action.clampWhenFinished = true;
-    action.play();
+  // ── Load all 4 FBX animations ──────────────────────────────────────────────
+  const fbxAnims = [
+    { file: `${BASE}Waving%20Gesture.fbx`, name: 'Wave'     },
+    { file: `${BASE}Swimming.fbx`,         name: 'Swimming' },
+    { file: `${BASE}Mma%20Kick.fbx`,       name: 'Kick'     },
+    { file: `${BASE}Jog%20In%20Circle.fbx`,name: 'Jog'      },
+  ];
 
-    mixer.addEventListener('finished', e => {
-      if (e.action !== action) return;
-      clearTimeout(waveTimer);
-      waveTimer = setTimeout(() => { action.reset().play(); }, WAVE_HOLD);
-    });
-
-  }, undefined, err => console.warn('FBX load error:', err));
+  const fbxLoader = new FBXLoader();
+  fbxAnims.forEach(({ file, name }) => {
+    fbxLoader.load(file, fbx => {
+      onAssetLoaded();
+      if (!fbx.animations.length) return;
+      const clip = fbx.animations[0];
+      clip.tracks.forEach(track => {
+        const dot = track.name.indexOf('.');
+        if (dot === -1) return;
+        track.name = THREE.PropertyBinding.sanitizeNodeName(track.name.slice(0, dot))
+                   + track.name.slice(dot);
+      });
+      actionMap[name] = mixer.clipAction(clip);
+      addAnimButton(name);
+      if (name === 'Wave') playAnimation('Wave');
+    }, undefined, err => console.warn(`FBX failed: ${file}`, err));
+  });
 
 }, undefined, err => console.error('GLB load error:', err));
 

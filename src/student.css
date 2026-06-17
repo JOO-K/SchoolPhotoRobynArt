@@ -182,16 +182,6 @@ body {
   padding-bottom: 14px;
   border-bottom: 1px solid rgba(0,0,0,0.08);
   min-height: 1em;
-  outline: none;
-}
-#student-desc:empty::before {
-  content: attr(data-placeholder);
-  color: #bbb;
-}
-#student-desc:focus {
-  background: rgba(0,0,0,0.02);
-  border-radius: 4px;
-  padding: 4px;
 }
 
 /* ── Fields ── */
@@ -224,25 +214,40 @@ body {
   color: #222;
   letter-spacing: 0.03em;
   flex: 1;
-  outline: none;
-  border-bottom: 1px dashed transparent;
-  transition: border-color 0.15s;
   min-height: 1em;
-  cursor: text;
 }
-.field-value:empty::before {
-  content: attr(data-placeholder);
-  color: #ccc;
-}
-.field-value:hover { border-bottom-color: rgba(0,0,0,0.15); }
-.field-value:focus { border-bottom-color: var(--accent); }
 
-.edit-hint {
-  margin-top: 14px;
-  font-size: 9px;
+/* ── Animation buttons (lower left) ── */
+#anim-controls {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  z-index: 10;
+}
+
+.anim-btn {
+  font-family: var(--font-ui);
+  padding: 6px 16px;
+  border: 1.5px solid rgba(0,0,0,0.18);
+  background: rgba(255,255,255,0.78);
+  color: #222;
+  font-size: 11px;
   letter-spacing: 0.08em;
-  color: #bbb;
-  text-align: right;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  backdrop-filter: blur(6px);
+  transition: background 0.15s, color 0.15s;
+}
+.anim-btn:hover { background: rgba(255,255,255,0.98); }
+.anim-btn.active {
+  background: rgba(20,20,20,0.88);
+  color: #fff;
+  border-color: transparent;
 }
 
 /* ── Copy camera button (lower right) ── */
