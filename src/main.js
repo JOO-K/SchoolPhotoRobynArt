@@ -25,6 +25,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
 
 // ── Renderer ──────────────────────────────────────────────────────────────────
 const canvas = document.getElementById('canvas');
@@ -34,6 +35,13 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const outlineEffect = new OutlineEffect(renderer, {
+  defaultThickness: 0.002,
+  defaultColor:     [0.2, 0.2, 0.2],
+  defaultAlpha:     0.55,
+  defaultKeepAlive: true,
+});
 
 // ── Scene ─────────────────────────────────────────────────────────────────────
 const scene = new THREE.Scene();
@@ -241,7 +249,7 @@ window.addEventListener('keydown', e => {
   }
 });
 
-// ── Apply materials + outline to a model ─────────────────────────────────────
+// ── Apply materials to a model ────────────────────────────────────────────────
 function applyMaterials(model) {
   const meshes = [];
   model.traverse(n => { if (n.isMesh) meshes.push(n); });
@@ -249,12 +257,7 @@ function applyMaterials(model) {
     n.castShadow = true;
     n.receiveShadow = true;
     n.material = new THREE.MeshStandardMaterial({ color: OFF_WHITE, roughness: 0.75, metalness: 0.0 });
-    const outline = new THREE.Mesh(
-      n.geometry,
-      new THREE.MeshBasicMaterial({ color: 0x888888, side: THREE.BackSide })
-    );
-    outline.scale.setScalar(1.04);
-    n.add(outline);
+    n.material.userData.outlineParameters = { thickness: 0.002, color: [0.2, 0.2, 0.2], alpha: 0.55 };
   });
 }
 
@@ -288,10 +291,9 @@ new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
   model4.position.copy(MODEL4_POS); model4.rotation.z =  1.06297;
 
   // Ground
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(maxDim * 30, maxDim * 30),
-    new THREE.ShadowMaterial({ opacity: 0.35 })
-  );
+  const groundMat = new THREE.ShadowMaterial({ opacity: 0.35 });
+  groundMat.userData = { outlineParameters: { visible: false } };
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(maxDim * 30, maxDim * 30), groundMat);
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.98729;
   ground.receiveShadow = true;
@@ -466,7 +468,7 @@ function animate() {
   if (mixer) mixer.update(dt);
   if (window._extraMixers) window._extraMixers.forEach(m => m.update(dt));
   orbit.update();
-  renderer.render(scene, camera);
+  outlineEffect.render(scene, camera);
   updateDataPanel();
 }
 animate();
