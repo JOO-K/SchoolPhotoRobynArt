@@ -2,10 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -58,7 +55,7 @@ function onAssetLoaded() {
   }
 }
 
-// ── Renderer ──────────────────────────────────────────────────────────────────
+// ── Renderer + OutlineEffect ──────────────────────────────────────────────────
 const canvas = document.getElementById('canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -68,6 +65,14 @@ renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace  = THREE.SRGBColorSpace;
 renderer.toneMapping       = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
+
+// OutlineEffect wraps the renderer — works correctly on SkinnedMesh
+const outline = new OutlineEffect(renderer, {
+  defaultThickness: 0.004,
+  defaultColor:     [0.05, 0.05, 0.05],
+  defaultAlpha:     1.0,
+  defaultKeepAlive: true,
+});
 
 // ── Scene + Camera ────────────────────────────────────────────────────────────
 const scene = new THREE.Scene();
@@ -81,20 +86,6 @@ orbit.enableDamping = true;
 orbit.dampingFactor = 0.06;
 orbit.target.set(0, -0.5, 0);
 orbit.update();
-
-// ── Post-processing (OutlinePass — works on skinned meshes) ───────────────────
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
-
-const outlinePass = new OutlinePass(new THREE.Vector2(innerWidth, innerHeight), scene, camera);
-outlinePass.edgeStrength  = 5;
-outlinePass.edgeThickness = 1.5;
-outlinePass.edgeGlow      = 0;
-outlinePass.pulsePeriod   = 0;
-outlinePass.visibleEdgeColor.set('#111111');
-outlinePass.hiddenEdgeColor.set('#111111');
-composer.addPass(outlinePass);
-composer.addPass(new OutputPass());
 
 // ── Lighting ──────────────────────────────────────────────────────────────────
 scene.add(new THREE.AmbientLight(0xffffff, 0.9));
@@ -111,21 +102,23 @@ const fill = new THREE.DirectionalLight(0xe8f2ff, 0.6);
 fill.position.set(-2, 1, 1);
 scene.add(fill);
 
-const rim2 = new THREE.DirectionalLight(0xffffff, 0.35);
-rim2.position.set(0, 2, -2);
-scene.add(rim2);
+const rimLight = new THREE.DirectionalLight(0xffffff, 0.35);
+rimLight.position.set(0, 2, -2);
+scene.add(rimLight);
 
-// ── White studio backdrop ─────────────────────────────────────────────────────
+// ── White studio backdrop (no outline on these) ───────────────────────────────
+const noOutline = { outlineParameters: { visible: false } };
+
 const bgMat = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
+bgMat.userData = noOutline;
 
 const backWall = new THREE.Mesh(new THREE.PlaneGeometry(12, 8), bgMat);
 backWall.position.set(0, 1.5, -1.8);
 scene.add(backWall);
 
-const shadowFloor = new THREE.Mesh(
-  new THREE.PlaneGeometry(20, 20),
-  new THREE.ShadowMaterial({ opacity: 0.18 })
-);
+const shadowFloorMat = new THREE.ShadowMaterial({ opacity: 0.18 });
+shadowFloorMat.userData = noOutline;
+const shadowFloor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), shadowFloorMat);
 shadowFloor.rotation.x = -Math.PI / 2;
 shadowFloor.position.y = -0.98729;
 shadowFloor.receiveShadow = true;
@@ -160,24 +153,25 @@ new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
   model.rotation.x = -Math.PI / 2;
   model.position.set(0, -0.98729, 0);
 
-  // Materials
   const meshes = [];
   model.traverse(n => { if (n.isMesh) meshes.push(n); });
   meshes.forEach(n => {
     n.castShadow    = true;
     n.receiveShadow = true;
     n.material = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(0xf2ede8),
+      color:     new THREE.Color(0xf2ede8),
       roughness: 0.75,
       metalness: 0.0,
     });
+    // OutlineEffect reads thickness/color per-material via userData
+    n.material.userData.outlineParameters = {
+      thickness: 0.004,
+      color:     [0.05, 0.05, 0.05],
+      alpha:     1.0,
+    };
   });
 
   scene.add(model);
-
-  // OutlinePass targets the model root — works on skinned meshes
-  outlinePass.selectedObjects = [model];
-
   mixer = new THREE.AnimationMixer(model);
 
   new FBXLoader().load(`${BASE}Waving%20Gesture.fbx`, (fbx) => {
@@ -200,8 +194,6 @@ window.addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
-  composer.setSize(innerWidth, innerHeight);
-  outlinePass.resolution.set(innerWidth, innerHeight);
 });
 
 // ── Render loop ───────────────────────────────────────────────────────────────
@@ -211,5 +203,5 @@ const clock = new THREE.Clock();
   const dt = clock.getDelta();
   if (mixer) mixer.update(dt);
   orbit.update();
-  composer.render();
+  outline.render(scene, camera);
 })();
