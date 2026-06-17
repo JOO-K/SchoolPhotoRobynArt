@@ -79,12 +79,12 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xeeeeee);
 
 const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.01, 100);
-camera.position.set(0, -0.1, 1.5);
+camera.position.set(0.03250, -0.06546, 1.41046);
 
 const orbit = new OrbitControls(camera, canvas);
 orbit.enableDamping = true;
 orbit.dampingFactor = 0.06;
-orbit.target.set(0, -0.5, 0);
+orbit.target.set(0.03250, -0.44546, -0.01454);
 orbit.update();
 
 // ── Lighting ──────────────────────────────────────────────────────────────────
@@ -120,13 +120,13 @@ const shadowFloorMat = new THREE.ShadowMaterial({ opacity: 0.18 });
 shadowFloorMat.userData = noOutline;
 const shadowFloor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), shadowFloorMat);
 shadowFloor.rotation.x = -Math.PI / 2;
-shadowFloor.position.y = -0.98729;
+shadowFloor.position.y = -0.98342;
 shadowFloor.receiveShadow = true;
 scene.add(shadowFloor);
 
 const floorFill = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), bgMat);
 floorFill.rotation.x = -Math.PI / 2;
-floorFill.position.y = -0.989;
+floorFill.position.y = -0.9854;
 scene.add(floorFill);
 
 // ── Gizmo (set up before model loads, attached after) ────────────────────────
@@ -185,8 +185,8 @@ new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
   onAssetLoaded();
 
   const model = gltf.scene;
-  model.rotation.x = -Math.PI / 2;
-  model.position.set(0, -0.98729, 0);
+  model.position.set(0.00000, -0.98342, 0.00000);
+  model.rotation.set(-1.57080, 0.00000, 0.00000);
 
   const meshes = [];
   model.traverse(n => { if (n.isMesh) meshes.push(n); });
