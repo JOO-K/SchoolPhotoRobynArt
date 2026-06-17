@@ -13,6 +13,11 @@ function onAssetLoaded() {
   const pct = Math.round((assetsLoaded / TOTAL_ASSETS) * 100);
   percentEl.textContent = `${pct}%`;
   barFill.style.width   = `${pct}%`;
+  if (assetsLoaded === TOTAL_ASSETS) {
+    const loaderEl = document.getElementById('loader');
+    loaderEl.style.opacity = '0';
+    setTimeout(() => loaderEl.remove(), 400);
+  }
 }
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
@@ -34,14 +39,14 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 const scene = new THREE.Scene();
 
 // ── Camera ────────────────────────────────────────────────────────────────────
-const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.0001, 1000);
-camera.position.set(0.36063, -0.19254, 0.91120);
+const camera = new THREE.PerspectiveCamera(94, window.innerWidth / window.innerHeight, 0.0001, 1000);
+camera.position.set(0.23806, -0.16684, 0.96153);
 
 // ── Orbit controls ────────────────────────────────────────────────────────────
 const orbit = new OrbitControls(camera, renderer.domElement);
 orbit.enableDamping = true;
 orbit.dampingFactor = 0.05;
-orbit.target.set(0.40715, -0.55080, -0.25436);
+orbit.target.set(0.30464, -0.45323, -0.28885);
 orbit.update();
 
 // ── Lighting ──────────────────────────────────────────────────────────────────
@@ -67,16 +72,48 @@ scene.add(rim);
 // ── HDRI environment ──────────────────────────────────────────────────────────
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
 pmremGenerator.compileEquirectangularShader();
+scene.backgroundRotation.y = (127 * Math.PI) / 180;
+let currentEnvMap = null;
 
-new RGBELoader().load(`${BASE}spooky_bamboo.hdr`, (hdrTexture) => {
-  onAssetLoaded();
-  hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
-  scene.background = hdrTexture;
-  scene.backgroundRotation.y = (127 * Math.PI) / 180;
-  const envMap = pmremGenerator.fromEquirectangular(hdrTexture).texture;
-  scene.environment = envMap;
-  pmremGenerator.dispose();
+function loadHDRI(filename, onLoaded) {
+  new RGBELoader().load(`${BASE}${filename}`, (hdrTexture) => {
+    hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
+    const rot = scene.backgroundRotation.y;
+    if (scene.background && typeof scene.background.dispose === 'function') scene.background.dispose();
+    if (currentEnvMap) currentEnvMap.dispose();
+    scene.background = hdrTexture;
+    scene.backgroundRotation.y = rot;
+    currentEnvMap = pmremGenerator.fromEquirectangular(hdrTexture).texture;
+    scene.environment = currentEnvMap;
+    if (onLoaded) onLoaded();
+  });
+}
+
+const HDRIS = [
+  { file: 'spooky_bamboo.hdr',            label: 'Bamboo'  },
+  { file: 'bambanani_sunset_2k.hdr',       label: 'Sunset'  },
+  { file: 'ferndale_studio_07_2k.hdr',     label: 'Studio'  },
+  { file: 'peppermint_powerplant_4k.hdr',  label: 'Factory' },
+  { file: 'rostock_laage_airport_4k.hdr',  label: 'Airport' },
+];
+
+// Build HDRI switcher buttons
+const hdriBtns = document.getElementById('hdri-btns');
+HDRIS.forEach(({ file, label }) => {
+  const btn = document.createElement('button');
+  btn.className = 'hdri-btn';
+  btn.textContent = label;
+  if (file === 'spooky_bamboo.hdr') btn.classList.add('active');
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.hdri-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadHDRI(file);
+  });
+  hdriBtns.appendChild(btn);
 });
+
+// Initial load — counts toward progress bar
+loadHDRI('spooky_bamboo.hdr', onAssetLoaded);
 
 // ── Animation state ───────────────────────────────────────────────────────────
 const clock = new THREE.Clock();
@@ -91,9 +128,10 @@ const WAVE_HOLD_MS  = 3000;
 const OFF_WHITE     = new THREE.Color(0xf2ede8);
 
 // Hardcoded from gizmo session
-const MODEL_POS  = new THREE.Vector3(0.00000, -0.98729, 0.00000);
-const MODEL2_POS = new THREE.Vector3(0.60000, -0.98729, 0.00000);
-const MODEL3_POS = new THREE.Vector3(0.92858, -0.98729, -1.05158);
+const MODEL_POS  = new THREE.Vector3(-0.08449, -0.98729, -0.32648);
+const MODEL2_POS = new THREE.Vector3( 0.60000, -0.98729, -0.27299);
+const MODEL3_POS = new THREE.Vector3( 1.06497, -0.98729,  0.02278);
+const MODEL4_POS = new THREE.Vector3(-0.68989, -0.98729, -0.09474);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function sanitizeClipTracks(clip, displayName) {
@@ -145,8 +183,8 @@ const dataPanel = document.getElementById('data-panel');
 function fmt(v) { return v.toFixed(5); }
 
 function updateDataPanel() {
-  if (!allTransformControls.length) return;
-  const labels = ['WAVE', 'KICK', 'JOG'];
+  if (!allTransformControls.length || !dataPanel) return;
+  const labels = ['WAVE', 'KICK', 'JOG', 'IDLE'];
   let text = '';
   allTransformControls.forEach((tc, i) => {
     const obj = tc?.object;
@@ -161,7 +199,7 @@ function updateDataPanel() {
     `── CAMERA ──\n` +
     `pos  x:${fmt(camera.position.x)}  y:${fmt(camera.position.y)}  z:${fmt(camera.position.z)}\n` +
     `target  x:${fmt(orbit.target.x)}  y:${fmt(orbit.target.y)}  z:${fmt(orbit.target.z)}\n\n` +
-    `[1/2/3] select  [T] translate  [R] rotate  [G] gizmo`;
+    `[1/2/3/4] select  [T] translate  [R] rotate  [G] gizmo`;
   dataPanel.textContent = text;
 }
 
@@ -170,6 +208,7 @@ window.addEventListener('keydown', e => {
   if (e.key === '1') setActiveGizmo(0);
   if (e.key === '2') setActiveGizmo(1);
   if (e.key === '3') setActiveGizmo(2);
+  if (e.key === '4') setActiveGizmo(3);
   const tc = allTransformControls[activeTC];
   if (!tc) return;
   if (e.key === 't' || e.key === 'T') tc.setMode('translate');
@@ -203,11 +242,12 @@ function applyMaterials(model) {
 new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
   onAssetLoaded();
 
-  // Three model instances
+  // Four model instances with standard Z-up correction
   const model1 = gltf.scene;
   const model2 = SkeletonUtils.clone(gltf.scene);
   const model3 = SkeletonUtils.clone(gltf.scene);
-  const models = [model1, model2, model3];
+  const model4 = SkeletonUtils.clone(gltf.scene);
+  const models = [model1, model2, model3, model4];
 
   models.forEach(m => {
     applyMaterials(m);
@@ -221,10 +261,11 @@ new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
   const size0  = box0.getSize(new THREE.Vector3());
   const maxDim = Math.max(size0.x, size0.y, size0.z);
 
-  // Main model at saved position; extra models staggered nearby (user will reposition)
-  model1.position.copy(MODEL_POS);
-  model2.position.copy(MODEL2_POS);
-  model3.position.copy(MODEL3_POS);
+  // Positions
+  model1.position.copy(MODEL_POS);  model1.rotation.z =  0.26127;
+  model2.position.copy(MODEL2_POS); model2.rotation.z = -0.39975;
+  model3.position.copy(MODEL3_POS); model3.rotation.z = -0.80775;
+  model4.position.copy(MODEL4_POS); model4.rotation.z =  1.06297;
 
   // Ground
   const ground = new THREE.Mesh(
@@ -241,15 +282,15 @@ new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
   camera.far  = maxDim * 100;
   camera.updateProjectionMatrix();
 
-  // Transform controls for each model (G to toggle, 1/2/3 to select)
+  // Transform controls for all four models
   models.forEach(m => makeTransformControls(m));
   updateDataPanel();
 
-  // ── Three mixers ───────────────────────────────────────────────────────────
+  // ── Four mixers ────────────────────────────────────────────────────────────
   const mixer1 = new THREE.AnimationMixer(model1);
   const mixer2 = new THREE.AnimationMixer(model2);
   const mixer3 = new THREE.AnimationMixer(model3);
-  const mixers = [mixer1, mixer2, mixer3];
+  const mixer4 = new THREE.AnimationMixer(model4);
   mixer = mixer1; // keep global ref for clock.getDelta loop (updated below)
 
   // GLB clips → mixer1 (Wave model)
@@ -279,22 +320,20 @@ new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
       if (!HIDDEN_CLIPS.has(name)) addAnimationButton(name);
       if (name === DEFAULT_ANIM) playAnimation(DEFAULT_ANIM);
 
-      // Model2 → auto-play Kick with 3s hold at end then replay
-      if (name === 'Kick') {
-        const a = mixer2.clipAction(clip);
-        a.setLoop(THREE.LoopOnce, 1);
-        a.clampWhenFinished = true;
-        a.play();
-        mixer2.addEventListener('finished', e => {
-          if (e.action !== a) return;
-          setTimeout(() => { a.reset().play(); }, WAVE_HOLD_MS);
+      // Models 2/3/4 → staggered Wave via preroll (no T-pose on reveal)
+      if (name === 'Wave') {
+        const dur = clip.duration;
+        [[mixer2, 0.30], [mixer3, 0.58], [mixer4, 0.82]].forEach(([mx, offset]) => {
+          const a = mx.clipAction(clip);
+          a.setLoop(THREE.LoopOnce, 1);
+          a.clampWhenFinished = true;
+          a.play();
+          mx.update(dur * offset); // advance mixer so model is mid-wave on reveal
+          mx.addEventListener('finished', e => {
+            if (e.action !== a) return;
+            setTimeout(() => { a.reset().play(); }, WAVE_HOLD_MS);
+          });
         });
-      }
-      // Model3 → auto-play Jog
-      if (name === 'Jog') {
-        const a = mixer3.clipAction(clip);
-        a.setLoop(THREE.LoopRepeat, Infinity);
-        a.play();
       }
 
       fbxLoaded++;
@@ -310,12 +349,8 @@ new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
     }, WAVE_HOLD_MS);
   });
 
-  // Patch render loop to update all three mixers
-  window._extraMixers = [mixer2, mixer3];
-
-  const loaderEl = document.getElementById('loader');
-  loaderEl.style.opacity = '0';
-  setTimeout(() => loaderEl.remove(), 400);
+  // Patch render loop to update all four mixers
+  window._extraMixers = [mixer2, mixer3, mixer4];
 
 }, undefined, err => console.error('GLB error:', err));
 
@@ -361,6 +396,47 @@ rotSlider.addEventListener('input', () => {
   const deg = Number(rotSlider.value);
   scene.backgroundRotation.y = (deg * Math.PI) / 180;
   rotLabel.textContent = `ROT ${deg}°`;
+});
+
+// ── About panel ───────────────────────────────────────────────────────────────
+const ABOUT_TEXT =
+`Robyn Art Studio — Summer 2026
+
+A class in 3D modeling and printing basics.
+Students design and build their own characters, learn to print them in 3D, and finish the course with a school photo — portraits taken with their own digital creations.
+
+Taught by Eric Joo
+ericjoodesign@gmail.com
+
+This website is a memorialization of the experience.`;
+
+const aboutBtn   = document.getElementById('about-btn');
+const aboutPanel = document.getElementById('about-panel');
+const aboutClose = document.getElementById('about-close');
+const aboutTextEl = document.getElementById('about-text');
+let twTimer = null;
+
+function runTypewriter(text) {
+  aboutTextEl.textContent = '';
+  let i = 0;
+  clearInterval(twTimer);
+  twTimer = setInterval(() => {
+    aboutTextEl.textContent += text[i++];
+    if (i >= text.length) clearInterval(twTimer);
+  }, 8);
+}
+
+aboutBtn.addEventListener('click', () => {
+  const rect = aboutBtn.getBoundingClientRect();
+  aboutPanel.style.top  = (rect.bottom + 10) + 'px';
+  aboutPanel.style.left = rect.left + 'px';
+  aboutPanel.classList.add('visible');
+  runTypewriter(ABOUT_TEXT);
+});
+
+aboutClose.addEventListener('click', () => {
+  aboutPanel.classList.remove('visible');
+  clearInterval(twTimer);
 });
 
 // ── Render loop ───────────────────────────────────────────────────────────────

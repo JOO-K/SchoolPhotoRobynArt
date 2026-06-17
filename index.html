@@ -4,11 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Robyn Art Studio</title>
-    <link href="https://fonts.googleapis.com/css2?family=Barrio&family=DotGothic16&subset=latin&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Barrio&family=DotGothic16&family=Monomaniac+One&family=Jua&family=Noto+Sans+JP:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <canvas id="canvas"></canvas>
+
+    <div id="about-panel">
+      <button id="about-close">×</button>
+      <p id="about-text"></p>
+    </div>
 
     <div id="loader">
       <div id="loader-percent">0%</div>
@@ -18,11 +23,21 @@
 
     <!-- Top left: logo + studio name + nav -->
     <div id="header">
-      <img id="logo" src="/SCHOOLPHOTO_logo.png" alt="logo" />
-      <div id="studio-name">Robyn Art Studio</div>
+      <img id="logo" src="/SCHOOLPHOTO - logo_full.png" alt="logo" />
       <div id="nav">
-        <button class="nav-btn">Syllabus</button>
-        <button class="nav-btn">About</button>
+        <a class="nav-btn" href="./syllabus.html">Syllabus</a>
+        <button id="about-btn">About</button>
+      </div>
+    </div>
+
+    <div id="studio-info">
+      <div id="studio-name-wrap">
+        <div id="studio-name">Robyn Art Studio</div>
+        <div class="studio-sub-line">
+          <span class="studio-ko">로빈 아트 스튜디오</span>
+          <span class="studio-es">Estudio de Arte Robyn</span>
+          <span class="studio-ja">ロビン・アート・スタジオ</span>
+        </div>
       </div>
     </div>
 
@@ -31,28 +46,28 @@
 
     <!-- Right side: name cards -->
     <div id="name-cards">
-      <div class="name-card">Irene<br>Hong</div>
-      <div class="name-card">Matthew<br>Baik</div>
-      <div class="name-card">Mason<br>Park</div>
-      <div class="name-card">Nathaniel<br>Kim</div>
-      <div class="name-card">Alexis<br>Lee</div>
+      <div class="name-card">Irene Hong</div>
+      <div class="name-card">Matthew Baik</div>
+      <div class="name-card">Mason Park</div>
+      <div class="name-card">Nathaniel Kim</div>
     </div>
 
     <!-- Camera controls -->
     <div id="fov-control">
+      <div id="hdri-row">
+        <span class="ctrl-label">ENV</span>
+        <div id="hdri-btns"></div>
+      </div>
       <div>
         <label id="rot-label">ROT 127°</label>
         <input id="rot-slider" type="range" min="0" max="360" value="127" step="1">
       </div>
       <div>
-        <label id="fov-label">FOV 90°</label>
-        <input id="fov-slider" type="range" min="40" max="130" value="90" step="1">
+        <label id="fov-label">FOV 94°</label>
+        <input id="fov-slider" type="range" min="40" max="130" value="94" step="1">
       </div>
     </div>
 
-    <!-- Bottom right: data panel -->
-    <div id="data-panel"></div>
-    <button id="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('data-panel').textContent)">Copy</button>
 
     <script type="module" src="/src/main.js"></script>
   </body>
