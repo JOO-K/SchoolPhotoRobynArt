@@ -136,9 +136,11 @@ new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
   model.rotation.x = -Math.PI / 2;
   model.position.set(0, -0.98729, 0);
 
-  // Materials + dark outline for visibility on white backdrop
-  model.traverse(n => {
-    if (!n.isMesh) return;
+  // Collect meshes first — adding children inside traverse causes infinite recursion
+  const meshes = [];
+  model.traverse(n => { if (n.isMesh) meshes.push(n); });
+
+  meshes.forEach(n => {
     n.castShadow    = true;
     n.receiveShadow = true;
     n.material = new THREE.MeshStandardMaterial({
