@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: '/temperic/',
+  base: '/SchoolPhotoRobynArt/',
   server: {
     port: 5174
   }
