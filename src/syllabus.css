@@ -155,7 +155,7 @@ main {
 
 .week h2 {
   font-family: var(--font-ui);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: normal;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -166,7 +166,7 @@ main {
 }
 
 .week ul { list-style: none; display: flex; flex-direction: column; gap: 7px; }
-.week li { font-size: 11px; letter-spacing: 0.03em; color: var(--text); line-height: 1.4; }
+.week li { font-size: 14px; letter-spacing: 0.02em; color: var(--text); line-height: 1.5; }
 .week li.sub { color: var(--muted); padding-left: 8px; }
 
 /* ── Info grid ── */

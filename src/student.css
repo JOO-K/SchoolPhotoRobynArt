@@ -155,13 +155,13 @@ body {
 #info-panel {
   background: rgba(255,255,255,0.90);
   backdrop-filter: blur(20px);
-  border-radius: 12px 0 0 12px;
+  border-radius: 12px;
   border: 1px solid rgba(0,0,0,0.08);
-  border-right: none;
   padding: 18px 22px 16px 22px;
-  width: 260px;
+  width: 268px;
   max-height: calc(100vh - 280px);
   overflow-y: auto;
+  margin-right: 14px;
 }
 
 #student-name-display {
@@ -174,7 +174,7 @@ body {
 }
 
 #student-desc {
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.8;
   color: #555;
   letter-spacing: 0.03em;
@@ -244,3 +244,24 @@ body {
   color: #bbb;
   text-align: right;
 }
+
+/* ── Copy camera button (lower right) ── */
+#copy-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 4px;
+  color: #444;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  z-index: 10;
+  transition: background 0.15s;
+}
+#copy-btn:hover { background: rgba(255,255,255,0.95); }
