@@ -72,7 +72,7 @@ body {
 }
 
 #logo {
-  width: 370px;
+  width: 430px;
   height: auto;
   margin-left: -4px;
   margin-top: -4px;
@@ -205,20 +205,17 @@ a.nav-btn:hover { background: rgba(230, 57, 70, 1); }
   min-height: 1em;
 }
 
-/* ── Animation buttons (center, above sliders) ── */
+/* ── Animation buttons (lower right) ── */
 #anim-controls {
   position: fixed;
-  bottom: 110px;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 20px;
+  right: 20px;
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 6px;
   z-index: 10;
   pointer-events: all;
-  max-width: 500px;
 }
 
 .anim-btn {
@@ -252,7 +249,7 @@ a.nav-btn:hover { background: rgba(230, 57, 70, 1); }
   flex-direction: column;
   gap: 6px;
   z-index: 10;
-  pointer-events: none;
+  pointer-events: all;
 }
 
 .name-card {
@@ -265,11 +262,16 @@ a.nav-btn:hover { background: rgba(230, 57, 70, 1); }
   text-align: left;
   text-shadow: 0 1px 3px rgba(0,0,0,0.3);
   white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  display: block;
+  transition: filter 0.15s;
 }
+.name-card:hover { filter: brightness(1.15); }
 
-.name-card:nth-child(1) { background: rgba(239, 71, 111, 0.90); }
+.name-card:nth-child(1) { background: rgba(42, 157, 143, 0.90); }
 .name-card:nth-child(2) { background: rgba(69, 123, 157, 0.90); }
-.name-card:nth-child(3) { background: rgba(42, 157, 143, 0.90); }
+.name-card:nth-child(3) { background: rgba(239, 71, 111, 0.90); }
 .name-card:nth-child(4) { background: rgba(244, 162, 97, 0.90); }
 
 /* ── HDRI switcher ── */

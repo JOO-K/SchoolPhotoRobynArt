@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student — Robyn Art Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barrio&family=DotGothic16&family=Monomaniac+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/student.css" />
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <div id="loader">
+      <div id="loader-percent">0%</div>
+      <div id="loader-bar-track"><div id="loader-bar-fill"></div></div>
+      <p id="loader-label">Loading…</p>
+    </div>
+
+    <!-- Top left: logo + back nav -->
+    <div id="header">
+      <img id="logo" src="/SCHOOLPHOTO - logo_full.png" alt="logo" />
+      <div id="nav">
+        <a class="nav-btn" href="./index.html">← Home</a>
+        <a class="nav-btn syllabus-btn" href="./syllabus.html">Syllabus</a>
+      </div>
+    </div>
+
+    <!-- Right column: name ribbons + info panel -->
+    <div id="right-col">
+      <div id="name-cards">
+        <a class="name-card" href="./student.html?id=0">Irene Hong</a>
+        <a class="name-card" href="./student.html?id=1">Matthew Baik</a>
+        <a class="name-card" href="./student.html?id=2">Mason Park</a>
+        <a class="name-card" href="./student.html?id=3">Nathaniel Kim</a>
+      </div>
+
+      <div id="info-panel">
+        <div id="student-name-display"></div>
+        <p id="student-desc" contenteditable="true" data-placeholder="Add a description…"></p>
+        <div class="info-fields">
+          <div class="field-row">
+            <span class="field-label">Age</span>
+            <span class="field-value" id="field-age" contenteditable="true" data-placeholder="—"></span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">Favorites</span>
+            <span class="field-value" id="field-favorites" contenteditable="true" data-placeholder="—"></span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">Dislikes</span>
+            <span class="field-value" id="field-dislikes" contenteditable="true" data-placeholder="—"></span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">Family</span>
+            <span class="field-value" id="field-family" contenteditable="true" data-placeholder="—"></span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">Dream</span>
+            <span class="field-value" id="field-dream" contenteditable="true" data-placeholder="—"></span>
+          </div>
+        </div>
+        <p class="edit-hint">click any field to edit · auto-saved</p>
+      </div>
+    </div>
+
+    <script type="module" src="/src/student.js"></script>
+  </body>
+</html>
