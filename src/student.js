@@ -107,8 +107,13 @@ key.shadow.radius = 12;
 key.shadow.bias   = -0.001;
 scene.add(key);
 
-scene.add(Object.assign(new THREE.DirectionalLight(0xe8f2ff, 0.6), { position: new THREE.Vector3(-2, 1, 1) }));
-scene.add(Object.assign(new THREE.DirectionalLight(0xffffff, 0.35), { position: new THREE.Vector3(0, 2, -2) }));
+const fill = new THREE.DirectionalLight(0xe8f2ff, 0.6);
+fill.position.set(-2, 1, 1);
+scene.add(fill);
+
+const rim2 = new THREE.DirectionalLight(0xffffff, 0.35);
+rim2.position.set(0, 2, -2);
+scene.add(rim2);
 
 // ── White studio backdrop ─────────────────────────────────────────────────────
 const bgMat = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
