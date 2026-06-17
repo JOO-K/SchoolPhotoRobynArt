@@ -1,6 +1,19 @@
 import * as THREE from 'three';
 
 const BASE = import.meta.env.BASE_URL;
+
+// ── Load progress ─────────────────────────────────────────────────────────────
+const TOTAL_ASSETS = 6; // HDR + GLB + 4 FBX
+let assetsLoaded = 0;
+const percentEl = document.getElementById('loader-percent');
+const barFill   = document.getElementById('loader-bar-fill');
+
+function onAssetLoaded() {
+  assetsLoaded++;
+  const pct = Math.round((assetsLoaded / TOTAL_ASSETS) * 100);
+  percentEl.textContent = `${pct}%`;
+  barFill.style.width   = `${pct}%`;
+}
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -56,6 +69,7 @@ const pmremGenerator = new THREE.PMREMGenerator(renderer);
 pmremGenerator.compileEquirectangularShader();
 
 new RGBELoader().load(`${BASE}spooky_bamboo.hdr`, (hdrTexture) => {
+  onAssetLoaded();
   hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
   scene.background = hdrTexture;
   scene.backgroundRotation.y = (127 * Math.PI) / 180;
@@ -187,6 +201,7 @@ function applyMaterials(model) {
 
 // ── Load model ────────────────────────────────────────────────────────────────
 new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
+  onAssetLoaded();
 
   // Three model instances
   const model1 = gltf.scene;
@@ -254,6 +269,7 @@ new GLTFLoader().load(`${BASE}eric_new6.glb`, (gltf) => {
   let fbxLoaded = 0;
   fbxAnims.forEach(({ file, name }) => {
     fbxLoader.load(file, fbx => {
+      onAssetLoaded();
       if (!fbx.animations.length) return;
       const clip = fbx.animations[0];
       sanitizeClipTracks(clip, name);

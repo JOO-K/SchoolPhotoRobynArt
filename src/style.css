@@ -28,15 +28,36 @@ body {
   z-index: 100;
   transition: opacity 0.4s;
 }
-#loader p { margin-top: 16px; font-size: 14px; color: #666; font-family: var(--font-ui); }
-.spinner {
-  width: 40px; height: 40px;
-  border: 3px solid #ccc;
-  border-top-color: #222;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+#loader-percent {
+  font-family: var(--font-ui);
+  font-size: 52px;
+  color: #222;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  margin-bottom: 16px;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+#loader-bar-track {
+  width: 220px;
+  height: 3px;
+  background: #d0d0d0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+#loader-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: #222;
+  border-radius: 2px;
+  transition: width 0.25s ease;
+}
+#loader-label {
+  margin-top: 14px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #999;
+  font-family: var(--font-ui);
+}
 
 /* ── Top left header ── */
 #header {
